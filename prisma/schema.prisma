@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Message {
+  uid         String           @id @default(cuid())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  messageBody String
+  dateCreated DateTime
+  dateSent    DateTime
+  messageSid  String
+  to          String
+  from        String
+  status      MessageStatus
+  user        User             @relation(fields: [userUid], references: [uid])
+  direction   MessageDirection
+  userUid     String
+}
+
+model User {
+  uid       String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  username  String
+  email     String    @unique
+  accounts  Account[]
+  userId    String
+  loginType LoginType
+  messages   Message[]
+}
+
+model Account {
+  uid        String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  number     String   @unique
+  User       User?    @relation(fields: [userUid], references: [uid])
+  userUid    String?
+  accountSid String
+}
+
+enum LoginType {
+  EMAIL
+  GITHUB
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  ACCEPTED
+  SCHEDULED
+  CANCELLED
+  QUEUED
+  SENDING
+  FAILED
+  DELIVERED
+  UNDELIVERED
+  RECEIVING
+  RECEIVED
+  READ
+}
