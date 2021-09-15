@@ -1,7 +1,7 @@
 import { LoginType, User as DBUser } from '.prisma/client';
 import type { PrismaClient } from '.prisma/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { UserLoginType } from 'src/entities/User';
+import { UserLoginType } from '../entities/User';
 // import axios from 'axios';
 
 const emailRegex =
