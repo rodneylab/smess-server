@@ -2,42 +2,42 @@ import { LoginType, User as DBUser } from '.prisma/client';
 import type { PrismaClient } from '.prisma/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { UserLoginType } from '../entities/User';
-// import axios from 'axios';
+import axios from 'axios';
 
 const emailRegex =
   /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-// export async function githubLogin(
-//   supabase: SupabaseClient,
-//   accessToken: string,
-//   refreshToken: string,
-// )
-//  { try {
-//     const response = await axios({
-//       url: 'https://api.github.com/user',
-//       method: 'GET',
-//       headers: {
-//         Authorization: `token ${accessToken}`,
-//       },
-//     });
-//     const { login } = response.data;
+export async function githubLogin(
+  supabase: SupabaseClient,
+  accessToken: string,
+  refreshToken: string,
+)
+ { try {
+    const response = await axios({
+      url: 'https://api.github.com/user',
+      method: 'GET',
+      headers: {
+        Authorization: `token ${accessToken}`,
+      },
+    });
+    const { login } = response.data;
 
-//     const { user, session, error } = await supabase.auth.signIn({
-//       refreshToken,
-//     });
-//     return { login, user, session, error };
-//   } catch (error) {
-//     let message;
-//     if (error.response) {
-//       message = `Storage server responded with non 2xx code: ${error.response.data}`;
-//     } else if (error.request) {
-//       message = `No storage response received: ${error.request}`;
-//     } else {
-//       message = `Error setting up storage response: ${error.message}`;
-//     }
-//     return { error: { message } };
-//   }
-// }
+    const { user, session, error } = await supabase.auth.signIn({
+      refreshToken,
+    });
+    return { login, user, session, error };
+  } catch (error) {
+    let message;
+    if (error.response) {
+      message = `Storage server responded with non 2xx code: ${error.response.data}`;
+    } else if (error.request) {
+      message = `No storage response received: ${error.request}`;
+    } else {
+      message = `Error setting up storage response: ${error.message}`;
+    }
+    return { error: { message } };
+  }
+}
 
 export function githubRegistrationPermitted() {
   return process.env.ALLOW_GITHUB_REGISTRATION === 'true';

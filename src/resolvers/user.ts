@@ -3,7 +3,8 @@ import User, { UserLoginType } from '../entities/User';
 import type { Session } from '@supabase/supabase-js';
 import type { Context } from '../context';
 import {
-  // githubRegistrationPermitted,
+  githubLogin,
+  githubRegistrationPermitted,
   gqlUser,
   signInWithEmail,
   signUpWithEmail,
@@ -13,7 +14,6 @@ import {
 } from '../utilities/user';
 import RegisterInput from './RegisterInput';
 import { LoginType } from '.pnpm/@prisma+client@3.0.2_prisma@3.0.2/node_modules/.prisma/client';
-// import { COOKIE_NAME } from '../constants';
 
 @ObjectType()
 class FieldError {
@@ -46,59 +46,69 @@ export class UserResolver {
     return prisma.user.findUnique({ where: { uid: req.session.userId } });
   }
 
-  // @Mutation(() => UserResponse)
-  //   async githubLogin(
-  //     @Arg('accessToken') accessToken: string, // this is the GitHub access token (not supabase)
-  //     @Arg('refreshToken') refreshToken: string,
-  //     @Ctx() { req, prisma, supabase }: Context,
-  //   ): Promise<UserResponse> {
-  //     const { user, session, error } = await githubLogin(supabase, accessToken, refreshToken);
-  //     if (!user || !session) {
-  //       return {
-  //         errors: [
-  //           {
-  //             field: 'githubAccount',
-  //             message: 'Invalid user',
-  //           },
-  //         ],
-  //       };
-  //     }
-  //     const { user_metadata } = user;
-  //     let dbUser = await prisma.user.findFirst({
-  //       where: { username: user_metadata.user_name, loginType: LoginType.GITHUB },
-  //     });
-  //     if (!dbUser) {
-  //       if (!githubRegistrationPermitted) {
-  //         return {
-  //           errors: [
-  //             {
-  //               field: 'githubAccount',
-  //               message: 'Not currently registered',
-  //             },
-  //           ],
-  //         };
-  //       }
+  @Mutation(() => UserResponse)
+    async githubLogin(
+      @Arg('accessToken') accessToken: string, // this is the GitHub access token (not supabase)
+      @Arg('refreshToken') refreshToken: string,
+      @Ctx() { req, prisma, supabase }: Context,
+    ): Promise<UserResponse> {
+      const { user, session, error } = await githubLogin(supabase, accessToken, refreshToken);
+      if (!user || !session) {
+        return {
+          errors: [
+            {
+              field: 'githubAccount',
+              message: 'Invalid user',
+            },
+          ],
+        };
+      }
+      const { user_metadata } = user;
+      let dbUser = await prisma.user.findFirst({
+        where: { username: user_metadata.user_name, loginType: LoginType.GITHUB },
+      });
+      if (!dbUser) {
+        if (!githubRegistrationPermitted) {
+          return {
+            errors: [
+              {
+                field: 'githubAccount',
+                message: 'Not currently registered',
+              },
+            ],
+          };
+        }
 
-  //       const { email, uid } = user;
-  // 			const dbUser = await prisma.user.create({
-  // 				data: {
-  // 					userId: uid,
-  // 					email,
-  // 					username: user_metadata.user_name,
-  // 					loginType: LoginType.GITHUB,
-  // 				},
-  // 			});
-  //       return { ...gqlUser(dbUser), session };
-  //     }
-  //     if (error || !user || !session) {
-  //       return {
-  //         errors: [{ field: 'githubAccount', message: error?.message ?? '' }],
-  //       };
-  //     }
-  //     const { uid } = dbUser;
-  //     req.session.userId = uid;
-  //     return { ...gqlUser(dbUser), session };
-  //   }
+        const { email, id } = user;
+        if (!email) {
+          return {
+            errors: [
+              {
+                field: 'githubAccount',
+                message: 'Server error: email missing',
+              },
+            ],
+          };
+        }
+  			const dbUser = await prisma.user.create({
+  				data: {
+  					userId: id,
+  					email,
+  					username: user_metadata.user_name,
+  					loginType: LoginType.GITHUB,
+  				},
+  			});
+        return { ...gqlUser(dbUser), session };
+      }
+      if (error || !user || !session) {
+        return {
+          errors: [{ field: 'githubAccount', message: error?.message ?? '' }],
+        };
+      }
+      const { uid } = dbUser;
+      req.session.userId = uid;
+      return { ...gqlUser(dbUser), session };
+    }
 
   @Mutation(() => UserResponse)
   async login(
