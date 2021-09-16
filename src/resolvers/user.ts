@@ -151,19 +151,10 @@ export class UserResolver {
   }
 
   @Mutation(() => Boolean)
-  logout(@Ctx() {}: Context) {
-    // todo(rodneylab): check fastify way to do this
-    // return new Promise((resolve) =>
-    // req.session.destroy((error) => {
-    //   res.clearCookie(COOKIE_NAME);
-    //   if (error) {
-    //     console.error(error);
-    //     resolve(false);
-    //     return;
-    //   }
-    //   resolve(true);
-    // }),
-    // );
+  logout(@Ctx() { req }: Context) {
+    const { session } = req;
+    const next = () => {};
+    req.sessionStore.destroy(session.sessionId, next);
   }
 
   @Mutation(() => UserResponse)

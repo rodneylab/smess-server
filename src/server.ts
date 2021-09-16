@@ -15,8 +15,8 @@ import HelloResolver from './resolvers/hello';
 import UserResolver from './resolvers/user';
 import { PrismaClient } from '.prisma/client';
 import { createClient } from '@supabase/supabase-js';
-// import Redis from 'ioredis';
-// import connectRedis from 'connect-redis';
+import { COOKIE_NAME } from './constants';
+import { isProduction } from './utilities/utilities';
 
 function fastifyAppClosePlugin(app: FastifyInstance): ApolloServerPlugin {
   return {
@@ -43,7 +43,18 @@ async function startApolloServer() {
   });
   server.register(fastifyCookie);
   server.register(fastifyRedis, { host: '127.0.0.1' });
-  server.register(fastifySession, { secret: process.env.SESSION_SECRET as string });
+  const { redis } = server;
+  server.register(fastifySession, {
+    secret: process.env.SESSION_SECRET as string,
+    cookieName: COOKIE_NAME as string,
+    cookie: {
+      maxAge: 604_800_000, // 1000 * 3600 * 24 * 7 (1 week)
+      secure: isProduction,
+      sameSite: 'Lax',
+      domain: isProduction ? `.${process.env.DOMAIN}` : undefined,
+    },
+    saveUninitialized: false
+  });
   // server.register(prismaPlugin);
 
   const opts: RouteShorthandOptions = {
@@ -66,8 +77,6 @@ async function startApolloServer() {
   });
 
   const prisma = new PrismaClient();
-  // const RedisStore = connectRedis(session);
-  // const redis = new Redis(process.env.REDIS_URL);
   const supabase = createClient(
     process.env.SUPABASE_URL as string,
     process.env.SUPABASE_KEY as string,
@@ -86,7 +95,7 @@ async function startApolloServer() {
       req,
       res,
       prisma,
-      redis: server.redis,
+      redis,
       supabase,
     }),
   });
