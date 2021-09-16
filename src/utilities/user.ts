@@ -11,8 +11,8 @@ export async function githubLogin(
   supabase: SupabaseClient,
   accessToken: string,
   refreshToken: string,
-)
- { try {
+) {
+  try {
     const response = await axios({
       url: 'https://api.github.com/user',
       method: 'GET',
